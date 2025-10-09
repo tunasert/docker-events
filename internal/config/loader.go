@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -30,11 +31,12 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		DockerFilters:   splitAndTrim(os.Getenv("DOCKER_EVENT_FILTERS")),
-		DockerEventType: splitAndTrim(os.Getenv("DOCKER_EVENT_TYPES")),
-		NotifySubject:   getEnvOrDefault("NOTIFY_SUBJECT_PREFIX", defaultSubjectPrefix),
-		MessageTemplate: getEnvOrDefault("MESSAGE_TEMPLATE", defaultMessageTemplate),
-		LogLines:        logLines,
+		DockerFilters:    parseFilters(os.Getenv("DOCKER_FILTERS")),
+		DockerEventType:  parseEventTypes(os.Getenv("DOCKER_EVENT_TYPE")),
+		NotifySubject:    getEnvOrDefault("NOTIFY_SUBJECT", "Docker Event"),
+		MessageTemplate:  os.Getenv("MESSAGE_TEMPLATE"),
+		LogLines:         logLines,
+		EventGroupWindow: parseGroupWindow(os.Getenv("EVENT_GROUP_WINDOW")),
 	}
 
 	slackToken, ok := os.LookupEnv("SLACK_BOT_TOKEN")
@@ -105,6 +107,28 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func parseFilters(raw string) []string {
+	return splitAndTrim(raw)
+}
+
+func parseEventTypes(raw string) []string {
+	if raw == "" {
+		return []string{"container"}
+	}
+	return splitAndTrim(raw)
+}
+
+func parseGroupWindow(raw string) time.Duration {
+	if raw == "" {
+		return 5 * time.Second
+	}
+	duration, err := time.ParseDuration(raw)
+	if err != nil {
+		return 5 * time.Second
+	}
+	return duration
 }
 
 func getEnvOrDefault(key, fallback string) string {

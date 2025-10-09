@@ -17,6 +17,10 @@ type Event struct {
 	Timestamp time.Time
 }
 
+func (e Event) Time() string {
+	return e.Timestamp.Format(time.RFC3339)
+}
+
 type Actor struct {
 	ID         string
 	Attributes map[string]string

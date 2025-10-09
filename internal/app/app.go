@@ -35,6 +35,9 @@ func Run(ctx context.Context, logOut io.Writer) error {
 
 	n.SetDockerClient(watcher.Client())
 
+	grouper := notifier.NewEventGrouper(n, cfg)
+	defer grouper.Shutdown()
+
 	logger.Info("starting docker events watcher", "filters", cfg.DockerFilters, "types", cfg.DockerEventType)
 
 	err = watcher.Watch(ctx, func(ctx context.Context, event docker.Event) error {
@@ -45,7 +48,7 @@ func Run(ctx context.Context, logOut io.Writer) error {
 		}
 		attrs = append(attrs, "timestamp", event.Timestamp.Format("2006-01-02T15:04:05Z07:00"))
 		logger.Info("docker event", attrs...)
-		return n.NotifyEvent(ctx, cfg, event)
+		return grouper.HandleEvent(ctx, event)
 	})
 
 	if err != nil {

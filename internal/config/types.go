@@ -1,16 +1,20 @@
 package config
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 type Config struct {
-	DockerFilters   []string
-	DockerEventType []string
-	NotifySubject   string
-	MessageTemplate string
-	LogLines        int
-	Slack           SlackConfig
-	Telegram        TelegramConfig
-	Discord         DiscordConfig
+	DockerFilters    []string
+	DockerEventType  []string
+	NotifySubject    string
+	MessageTemplate  string
+	LogLines         int
+	EventGroupWindow time.Duration
+	Slack            SlackConfig
+	Telegram         TelegramConfig
+	Discord          DiscordConfig
 }
 
 type SlackConfig struct {

@@ -16,6 +16,7 @@ import (
 
 type templateData struct {
 	Event       docker.Event
+	Events      []docker.Event
 	ShortID     string
 	Name        string
 	Logs        string
@@ -23,6 +24,15 @@ type templateData struct {
 	containerID string
 	logLines    int64
 	dockerCli   *client.Client
+	isGrouped   bool
+}
+
+// EventCount returns the number of events (for grouped events)
+func (t *templateData) EventCount() int {
+	if t.isGrouped {
+		return len(t.Events)
+	}
+	return 1
 }
 
 // Type returns the event type
@@ -126,6 +136,62 @@ func formatEventWithTemplate(tmplStr string, event docker.Event, dockerCli *clie
 		containerID: containerID,
 		logLines:    int64(logLines),
 		dockerCli:   dockerCli,
+	}
+
+	// Parse template
+	tmpl, err := template.New("message").Parse(tmplStr)
+	if err != nil {
+		return "", "", fmt.Errorf("parse template: %w", err)
+	}
+
+	// Execute template
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", "", fmt.Errorf("execute template: %w", err)
+	}
+
+	return strings.TrimSpace(buf.String()), "", nil
+}
+
+func formatGroupedEventsWithTemplate(tmplStr string, events []docker.Event, dockerCli *client.Client, logLines int) (string, string, error) {
+	if len(events) == 0 {
+		return "", "", fmt.Errorf("no events to format")
+	}
+
+	if len(events) == 1 {
+		return formatEventWithTemplate(tmplStr, events[0], dockerCli, logLines)
+	}
+
+	// Use the first event as the primary event for template data
+	firstEvent := events[0]
+
+	// Extract container name from attributes
+	containerName := ""
+	containerID := ""
+
+	if firstEvent.Type == "container" {
+		if name, ok := firstEvent.Actor.Attributes["name"]; ok {
+			containerName = name
+		}
+		containerID = firstEvent.Actor.ID
+	}
+
+	// Create short ID (first 12 characters)
+	shortID := firstEvent.ID
+	if len(shortID) > 12 {
+		shortID = shortID[:12]
+	}
+
+	data := &templateData{
+		Event:       firstEvent,
+		Events:      events,
+		ShortID:     shortID,
+		Name:        containerName,
+		Time:        firstEvent.Timestamp.Format(time.RFC3339),
+		containerID: containerID,
+		logLines:    int64(logLines),
+		dockerCli:   dockerCli,
+		isGrouped:   true,
 	}
 
 	// Parse template

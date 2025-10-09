@@ -67,6 +67,7 @@ All settings are provided via environment variables (see `.env.example`). Key op
 - `NOTIFY_SUBJECT_PREFIX`: Prefix for notification subjects (defaults to `Docker event`).
 - `MESSAGE_TEMPLATE`: Custom message template using Go template syntax (see [Message Customization](#message-customization) below).
 - `MESSAGE_LOG_LINES`: Number of container log lines to fetch for events (defaults to 0, disabled).
+- `EVENT_GROUP_WINDOW`: Time window for grouping events from the same container (e.g., `5s`, `10s`, `1m`). Events for the same container within this window will be grouped into a single notification. Set to `0` to disable grouping (defaults to `5s`).
 - `DOCKER_EVENT_FILTERS`: Comma-separated filters passed to `docker system events` (same syntax as the CLI `--filter` flag, e.g. `status=start,type=container`).
 - `DOCKER_EVENT_TYPES`: Comma-separated list of Docker event types to keep (e.g. `container,image,volume`).
 
@@ -114,6 +115,77 @@ Leave the variable empty to accept every event type from the stream.
 
 More details in the [Docker documentation](https://docs.docker.com/engine/reference/commandline/system_events/#object-types).
 
+## Event Grouping
+
+To prevent notification spam when a container experiences multiple events in quick succession (e.g., during a restart: kill → stop → die → start → restart), docker-events can group events for the same container within a configurable time window.
+
+### How It Works
+
+When event grouping is enabled (default: 5 seconds), the service will:
+
+1. Collect all events for the same container within the time window
+2. Wait for the window to expire or for events from a different container
+3. Send a single grouped notification with all events instead of individual messages
+
+### Configuration
+
+Set the `EVENT_GROUP_WINDOW` environment variable to control the grouping window:
+
+```bash
+EVENT_GROUP_WINDOW=5s   # Default: group events within 5 seconds
+EVENT_GROUP_WINDOW=10s  # Group events within 10 seconds
+EVENT_GROUP_WINDOW=1m   # Group events within 1 minute
+EVENT_GROUP_WINDOW=0    # Disable grouping, send all events immediately
+```
+
+Valid time units: `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`
+
+### Grouped Notification Format
+
+When multiple events are grouped, the notification will include:
+
+- Container ID and total event count
+- Time range (first to last event)
+- Common attributes shared across all events
+- List of all events with timestamps and actions
+
+Example grouped notification:
+
+```
+Docker events: 5 events for container d23c731f32ba (die, kill, restart, start, stop)
+
+Container: d23c731f32ba41defa48b2804299e9378b84442857701b1d51b8e6aca77c35da
+Event count: 5
+Time range: 2025-10-09T08:10:58Z to 2025-10-09T08:10:59Z
+
+Common attributes:
+  - com.docker.compose.project=myapp
+  - com.docker.compose.service=web
+  - image=nginx:latest
+
+Events:
+  1. [08:10:58] container kill
+  2. [08:10:59] container stop
+  3. [08:10:59] container die
+  4. [08:10:59] container start
+  5. [08:10:59] container restart
+```
+
+### Benefits
+
+- **Reduced notification spam**: Restart operations typically generate 5+ events, which are now grouped into one message
+- **Better context**: See all related events together with their timing
+- **Cleaner notification channels**: Fewer messages to scroll through
+- **Preserved details**: All event information is retained, just organized better
+
+### Behavior Notes
+
+- Single events are sent immediately (no grouping overhead)
+- Events for different containers are never grouped together
+- The timer resets each time a new event arrives for the same container
+- On shutdown, all pending grouped events are flushed immediately
+- **Custom templates are fully supported**: If you have a `MESSAGE_TEMPLATE` configured, it will be used for both single and grouped events. Use `{{.EventCount}}` and `{{.Events}}` in your template to handle grouped events differently.
+
 ## Message Customization
 
 By default, docker-events sends detailed notifications with all available event information. You can customize the message format using Go templates via the `MESSAGE_TEMPLATE` environment variable.
@@ -132,6 +204,10 @@ By default, docker-events sends detailed notifications with all available event 
 - `{{.Actor.ID}}` - Actor ID
 - `{{.Attribute "key"}}` - Get specific attribute value by key
 - `{{.GetLogs}}` - Fetch container logs (requires `MESSAGE_LOG_LINES` > 0)
+- `{{.EventCount}}` - Number of events (returns 1 for single events, >1 for grouped events)
+- `{{.Events}}` - Array of all events (only available for grouped events; use with range)
+
+**Note:** When events are grouped (multiple events for the same container), `{{.Type}}`, `{{.Action}}`, etc. refer to the first event in the group. Use `{{.Events}}` to access all events in the group.
 
 ### Template Examples
 
@@ -158,6 +234,21 @@ MESSAGE_TEMPLATE="{{.Type}} {{.Action}}: {{.Name}}\nProject: {{.Attribute \"com.
 
 ```bash
 MESSAGE_TEMPLATE="{{.Type}} {{.Action}}: {{if .Name}}{{.Name}}{{else}}{{.ShortID}}{{end}}\nTime: {{.Time}}"
+```
+
+**Grouped events with custom template:**
+
+```bash
+MESSAGE_TEMPLATE="{{if gt .EventCount 1}}🔄 {{.EventCount}} events for {{.Name}} ({{.ShortID}})\n{{range .Events}}- [{{.Timestamp.Format \"15:04:05\"}}] {{.Action}}\n{{end}}{{else}}{{.Type}} {{.Action}}: {{.Name}}\nTime: {{.Time}}{{end}}"
+EVENT_GROUP_WINDOW=5s
+```
+
+**Grouped events with logs:**
+
+```bash
+MESSAGE_TEMPLATE="Container: {{.Name}} ({{.ShortID}})\nEvents: {{.EventCount}}\n{{if gt .EventCount 1}}Actions: {{range .Events}}{{.Action}} {{end}}\n{{end}}{{if .GetLogs}}\nLogs:\n{{.GetLogs}}{{end}}"
+MESSAGE_LOG_LINES=20
+EVENT_GROUP_WINDOW=5s
 ```
 
 ### Logs Configuration
