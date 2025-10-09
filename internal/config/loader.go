@@ -9,14 +9,32 @@ import (
 )
 
 const (
-	defaultSubjectPrefix = "Docker event"
+	defaultSubjectPrefix   = "Docker event"
+	defaultMessageTemplate = `Time: {{.Time}}
+Status: {{.Status}}
+From: {{.From}}
+Scope: {{.Scope}}
+ID: {{.ID}}
+Actor: {{.Actor.ID}}`
+	defaultLogLines = 0
 )
 
 func Load() (*Config, error) {
+	logLines := defaultLogLines
+	if logLinesStr := os.Getenv("MESSAGE_LOG_LINES"); logLinesStr != "" {
+		parsed, err := strconv.Atoi(logLinesStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid MESSAGE_LOG_LINES value %q: %w", logLinesStr, err)
+		}
+		logLines = parsed
+	}
+
 	cfg := &Config{
 		DockerFilters:   splitAndTrim(os.Getenv("DOCKER_EVENT_FILTERS")),
 		DockerEventType: splitAndTrim(os.Getenv("DOCKER_EVENT_TYPES")),
 		NotifySubject:   getEnvOrDefault("NOTIFY_SUBJECT_PREFIX", defaultSubjectPrefix),
+		MessageTemplate: getEnvOrDefault("MESSAGE_TEMPLATE", defaultMessageTemplate),
+		LogLines:        logLines,
 	}
 
 	slackToken, ok := os.LookupEnv("SLACK_BOT_TOKEN")

@@ -65,6 +65,8 @@ All settings are provided via environment variables (see `.env.example`). Key op
 - `DISCORD_CHANNEL_IDS`: Comma-separated list of Discord channel IDs to notify.
 - `DISCORD_WEBHOOK_URLS`: Comma-separated list of Discord webhook URLs (recommended over bot tokens for simple notifications).
 - `NOTIFY_SUBJECT_PREFIX`: Prefix for notification subjects (defaults to `Docker event`).
+- `MESSAGE_TEMPLATE`: Custom message template using Go template syntax (see [Message Customization](#message-customization) below).
+- `MESSAGE_LOG_LINES`: Number of container log lines to fetch for events (defaults to 0, disabled).
 - `DOCKER_CLI_PATH`: Path to the Docker CLI binary (defaults to `docker`).
 - `DOCKER_EVENT_FILTERS`: Comma-separated filters passed to `docker system events` (same syntax as the CLI `--filter` flag, e.g. `status=start,type=container`).
 - `DOCKER_EVENT_TYPES`: Comma-separated list of Docker event types to keep (e.g. `container,image,volume`).
@@ -112,6 +114,77 @@ More details in the [Docker documentation](https://docs.docker.com/reference/cli
 Leave the variable empty to accept every event type from the stream.
 
 More details in the [Docker documentation](https://docs.docker.com/engine/reference/commandline/system_events/#object-types).
+
+## Message Customization
+
+By default, docker-events sends detailed notifications with all available event information. You can customize the message format using Go templates via the `MESSAGE_TEMPLATE` environment variable.
+
+### Available Template Placeholders
+
+- `{{.Type}}` - Event type (container, image, volume, network, etc.)
+- `{{.Action}}` - Event action (start, stop, create, destroy, etc.)
+- `{{.ID}}` - Full object ID
+- `{{.ShortID}}` - Short ID (first 12 characters)
+- `{{.Name}}` - Container/object name (extracted from attributes when available)
+- `{{.Status}}` - Event status
+- `{{.From}}` - From field (typically the image name for container events)
+- `{{.Time}}` - Event timestamp in RFC3339 format
+- `{{.Scope}}` - Event scope (local or swarm)
+- `{{.Actor.ID}}` - Actor ID
+- `{{.Attribute "key"}}` - Get specific attribute value by key
+- `{{.GetLogs}}` - Fetch container logs (requires `MESSAGE_LOG_LINES` > 0)
+
+### Template Examples
+
+**Simple notification:**
+
+```bash
+MESSAGE_TEMPLATE="Container {{.Name}} ({{.ShortID}}) {{.Action}} at {{.Time}}"
+```
+
+**With container logs:**
+
+```bash
+MESSAGE_TEMPLATE="Container {{.Name}} {{.Action}}\nImage: {{.From}}\nLogs:\n{{.GetLogs}}"
+MESSAGE_LOG_LINES=20
+```
+
+**Custom attributes:**
+
+```bash
+MESSAGE_TEMPLATE="{{.Type}} {{.Action}}: {{.Name}}\nProject: {{.Attribute \"com.docker.compose.project\"}}\nService: {{.Attribute \"com.docker.compose.service\"}}"
+```
+
+**Conditional formatting:**
+
+```bash
+MESSAGE_TEMPLATE="{{.Type}} {{.Action}}: {{if .Name}}{{.Name}}{{else}}{{.ShortID}}{{end}}\nTime: {{.Time}}"
+```
+
+### Logs Configuration
+
+Set `MESSAGE_LOG_LINES` to fetch the last N lines of container logs when using `{{.GetLogs}}`:
+
+```bash
+MESSAGE_LOG_LINES=10  # Fetch last 10 lines
+MESSAGE_LOG_LINES=50  # Fetch last 50 lines
+MESSAGE_LOG_LINES=0   # Disable log fetching (default)
+```
+
+**Note:** Log fetching only works for container events and may add latency to notifications. Use reasonable line counts to avoid performance issues.
+
+### Default Template
+
+If no custom template is provided, the default format includes:
+
+```
+Time: <timestamp>
+Status: <status>
+From: <from>
+Scope: <scope>
+ID: <id>
+Actor: <actor_id>
+```
 
 ## Discord Webhooks vs Bots
 

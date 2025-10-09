@@ -32,6 +32,9 @@ func Run(ctx context.Context, logOut io.Writer) error {
 		logger.Error("create docker watcher", "error", err)
 		return fmt.Errorf("create watcher: %w", err)
 	}
+
+	n.SetDockerClient(watcher.Client())
+
 	logger.Info("starting docker events watcher", "filters", cfg.DockerFilters, "types", cfg.DockerEventType)
 
 	err = watcher.Watch(ctx, func(ctx context.Context, event docker.Event) error {

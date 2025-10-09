@@ -63,11 +63,8 @@ func (n *notifierImpl) addDiscord(cfg config.DiscordConfig) error {
 				Method:      stdhttp.MethodPost,
 				BuildPayload: func(subject, message string) (payload any) {
 					return map[string]any{
-						"embeds": []map[string]any{{
-							"title":       subject,
-							"description": message,
-							"color":       5814783,
-						}},
+						"content": fmt.Sprintf("**%s**\n%s", subject, message),
+						"embeds":  map[string]any{},
 					}
 				},
 			})

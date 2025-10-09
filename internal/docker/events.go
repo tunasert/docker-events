@@ -37,6 +37,10 @@ func NewWatcher(filtersList, eventTypes []string, logger *slog.Logger) (*Watcher
 	}, nil
 }
 
+func (w *Watcher) Client() *client.Client {
+	return w.client
+}
+
 func (w *Watcher) Watch(ctx context.Context, handle func(context.Context, Event) error) error {
 	defer w.client.Close()
 

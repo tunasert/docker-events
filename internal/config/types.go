@@ -6,6 +6,8 @@ type Config struct {
 	DockerFilters   []string
 	DockerEventType []string
 	NotifySubject   string
+	MessageTemplate string
+	LogLines        int
 	Slack           SlackConfig
 	Telegram        TelegramConfig
 	Discord         DiscordConfig
