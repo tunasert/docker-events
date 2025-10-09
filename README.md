@@ -67,7 +67,6 @@ All settings are provided via environment variables (see `.env.example`). Key op
 - `NOTIFY_SUBJECT_PREFIX`: Prefix for notification subjects (defaults to `Docker event`).
 - `MESSAGE_TEMPLATE`: Custom message template using Go template syntax (see [Message Customization](#message-customization) below).
 - `MESSAGE_LOG_LINES`: Number of container log lines to fetch for events (defaults to 0, disabled).
-- `DOCKER_CLI_PATH`: Path to the Docker CLI binary (defaults to `docker`).
 - `DOCKER_EVENT_FILTERS`: Comma-separated filters passed to `docker system events` (same syntax as the CLI `--filter` flag, e.g. `status=start,type=container`).
 - `DOCKER_EVENT_TYPES`: Comma-separated list of Docker event types to keep (e.g. `container,image,volume`).
 
