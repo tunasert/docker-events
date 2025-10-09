@@ -206,17 +206,33 @@ build_and_push_docker() {
     local tag_version="${DOCKER_IMAGE}:${version}"
     local tag_latest="${DOCKER_IMAGE}:latest"
     
-    print_info "Building Docker image..."
-    docker build -t "$tag_version" -t "$tag_latest" .
-    print_success "Docker image built"
+    # Supported platforms
+    local platforms="linux/amd64,linux/arm64,linux/arm/v7"
     
-    print_info "Pushing Docker image with version tag: $version"
-    docker push "$tag_version"
-    print_success "Docker image pushed: $tag_version"
+    print_info "Setting up Docker buildx..."
+    # Create a new builder instance if it doesn't exist
+    if ! docker buildx inspect multiarch-builder &> /dev/null; then
+        docker buildx create --name multiarch-builder --use
+        print_success "Created buildx builder: multiarch-builder"
+    else
+        docker buildx use multiarch-builder
+        print_info "Using existing buildx builder: multiarch-builder"
+    fi
     
-    print_info "Pushing Docker image with latest tag"
-    docker push "$tag_latest"
-    print_success "Docker image pushed: $tag_latest"
+    # Bootstrap the builder
+    docker buildx inspect --bootstrap
+    
+    print_info "Building and pushing multi-arch Docker image for: $platforms"
+    docker buildx build \
+        --platform "$platforms" \
+        --tag "$tag_version" \
+        --tag "$tag_latest" \
+        --push \
+        .
+    
+    print_success "Docker images built and pushed for all platforms"
+    print_success "  - $tag_version (amd64, arm64, arm/v7)"
+    print_success "  - $tag_latest (amd64, arm64, arm/v7)"
 }
 
 # Main script
@@ -252,8 +268,8 @@ main() {
     echo "  2. Create git tag v${new_version}"
     echo "  3. Push to GitHub"
     echo "  4. Create GitHub release v${new_version}"
-    echo "  5. Build and push Docker image ${DOCKER_IMAGE}:${new_version}"
-    echo "  6. Tag and push Docker image ${DOCKER_IMAGE}:latest"
+    echo "  5. Build multi-arch Docker images (linux/amd64, linux/arm64, linux/arm/v7)"
+    echo "  6. Push Docker images ${DOCKER_IMAGE}:${new_version} and ${DOCKER_IMAGE}:latest"
     echo
     read -p "Continue? (y/N): " -n 1 -r
     echo
