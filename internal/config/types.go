@@ -24,9 +24,10 @@ type TelegramConfig struct {
 }
 
 type DiscordConfig struct {
-	Enabled    bool
-	Token      string
-	ChannelIDs []string
+	Enabled     bool
+	Token       string
+	ChannelIDs  []string
+	WebhookURLs []string
 }
 
 func (c *Config) Validate() error {

@@ -60,13 +60,25 @@ func Load() (*Config, error) {
 	if ok && discordToken != "" {
 		discordChannels := splitAndTrim(os.Getenv("DISCORD_CHANNEL_IDS"))
 		if len(discordChannels) == 0 {
-			return nil, errors.New("discord configured but DISCORD_CHANNEL_IDS is empty")
+			return nil, errors.New("discord bot configured but DISCORD_CHANNEL_IDS is empty")
 		}
 
 		cfg.Discord = DiscordConfig{
 			Enabled:    true,
 			Token:      discordToken,
 			ChannelIDs: discordChannels,
+		}
+	}
+
+	discordWebhooks := splitAndTrim(os.Getenv("DISCORD_WEBHOOK_URLS"))
+	if len(discordWebhooks) > 0 {
+		if cfg.Discord.Enabled {
+			cfg.Discord.WebhookURLs = discordWebhooks
+		} else {
+			cfg.Discord = DiscordConfig{
+				Enabled:     true,
+				WebhookURLs: discordWebhooks,
+			}
 		}
 	}
 

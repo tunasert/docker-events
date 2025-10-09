@@ -24,7 +24,7 @@ Prerequisites
 
 - Go 1.24+
 - Docker CLI with access to the target daemon
-- At least one notifications provider configured (Slack bot token + channel IDs, Telegram bot token + chat IDs, or Discord bot token + channel IDs)
+- At least one notifications provider configured (Slack bot token + channel IDs, Telegram bot token + chat IDs, Discord bot token + channel IDs, or Discord webhook URLs)
 
 Clone & install dependencies
 
@@ -63,6 +63,7 @@ All settings are provided via environment variables (see `.env.example`). Key op
 - `TELEGRAM_CHAT_IDS`: Comma-separated list of chat IDs (negative values for group chats are supported).
 - `DISCORD_BOT_TOKEN`: Discord bot token generated from the Developer Portal.
 - `DISCORD_CHANNEL_IDS`: Comma-separated list of Discord channel IDs to notify.
+- `DISCORD_WEBHOOK_URLS`: Comma-separated list of Discord webhook URLs (recommended over bot tokens for simple notifications).
 - `NOTIFY_SUBJECT_PREFIX`: Prefix for notification subjects (defaults to `Docker event`).
 - `DOCKER_CLI_PATH`: Path to the Docker CLI binary (defaults to `docker`).
 - `DOCKER_EVENT_FILTERS`: Comma-separated filters passed to `docker system events` (same syntax as the CLI `--filter` flag, e.g. `status=start,type=container`).
@@ -111,6 +112,40 @@ More details in the [Docker documentation](https://docs.docker.com/reference/cli
 Leave the variable empty to accept every event type from the stream.
 
 More details in the [Docker documentation](https://docs.docker.com/engine/reference/commandline/system_events/#object-types).
+
+## Discord Webhooks vs Bots
+
+This project supports two methods for Discord notifications:
+
+**Discord Webhooks (Recommended)**
+
+Discord webhooks are the simplest way to send notifications. They use HTTP POST requests and don't require a bot session or gateway connection.
+
+Advantages:
+
+- Simpler setup - just create a webhook in your Discord channel settings
+- No bot permissions or OAuth scopes needed
+- More efficient - uses plain HTTP instead of maintaining a WebSocket connection
+- Can send to multiple channels by providing multiple webhook URLs
+
+To create a Discord webhook:
+
+1. Open your Discord server and go to the channel where you want notifications
+2. Click the gear icon (Edit Channel) next to the channel name
+3. Go to "Integrations" → "Webhooks" → "New Webhook"
+4. Copy the webhook URL and add it to `DISCORD_WEBHOOK_URLS`
+
+Example:
+
+```bash
+DISCORD_WEBHOOK_URLS=https://discord.com/api/webhooks/123456789/your-webhook-token
+```
+
+**Discord Bot (Alternative)**
+
+Bot tokens can be used if you need more advanced features or already have a bot infrastructure. Configure with `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_IDS`.
+
+You can also use both webhooks and bot tokens simultaneously if needed.
 
 ## Extending Notifications
 
